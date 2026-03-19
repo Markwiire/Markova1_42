@@ -17,7 +17,11 @@ import androidx.recyclerview.widget.RecyclerView;
 
 
 
+import com.squareup.picasso.Callback;
+import com.squareup.picasso.MemoryPolicy;
+import com.squareup.picasso.NetworkPolicy;
 import com.squareup.picasso.Picasso;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -61,7 +65,30 @@ public class PetAdapter extends RecyclerView.Adapter<PetAdapter.PetViewHolder> {
                     .load(pet.getImageUrl())
                     .placeholder(R.drawable.placeholder_pet)
                     .error(R.drawable.placeholder_pet)
-                    .into(holder.imagePet);
+                    .resize(600, 600)
+                    .onlyScaleDown()
+                    .centerCrop()
+                    .memoryPolicy(MemoryPolicy.NO_CACHE, MemoryPolicy.NO_STORE)
+                    .networkPolicy(NetworkPolicy.OFFLINE)
+                    .into(holder.imagePet, new Callback() {
+                        @Override
+                        public void onSuccess() {
+                            Log.d("PICASSO", "Загружено из кэша");
+                        }
+
+                        @Override
+                        public void onError(Exception e) {
+
+                            Picasso.get()
+                                    .load(pet.getImageUrl())
+                                    .placeholder(R.drawable.placeholder_pet)
+                                    .error(R.drawable.placeholder_pet)
+                                    .resize(600, 600)
+                                    .onlyScaleDown()
+                                    .centerCrop()
+                                    .into(holder.imagePet);
+                        }
+                    });
         } else {
             holder.imagePet.setImageResource(R.drawable.placeholder_pet);
         }
@@ -95,7 +122,6 @@ public class PetAdapter extends RecyclerView.Adapter<PetAdapter.PetViewHolder> {
                 toggleFavorite(pet.getId(), holder.imageFavorite);
             });
         }
-
 
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(context, PetDetailActivity.class);
