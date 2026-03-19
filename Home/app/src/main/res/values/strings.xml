@@ -1,0 +1,40 @@
+<resources>
+    <string name="app_name">Paws Paradise</string>
+
+    <string-array name="pet_types">
+        <item>Собака</item>
+        <item>Кошка</item>
+    </string-array>
+
+    <string-array name="pet_genders">
+        <item>Мальчик</item>
+        <item>Девочка</item>
+    </string-array>
+
+
+    <string-array name="pet_sizes">
+        <item>Маленький</item>
+        <item>Средний</item>
+        <item>Большой</item>
+    </string-array>
+
+    <string-array name="hair_lengths">
+        <item>Короткошерстный</item>
+        <item>Среднешерстный</item>
+        <item>Длинношерстный</item>
+    </string-array>
+
+
+
+    <string-array name="filter_options">
+        <item>Все питомцы</item>
+        <item>Только собаки</item>
+        <item>Только кошки</item>
+        <item>Маленькие</item>
+        <item>Средние</item>
+        <item>Большие</item>
+        <item>Короткошерстные</item>
+        <item>Среднешерстные</item>
+        <item>Длинношерстные</item>
+    </string-array>
+</resources>

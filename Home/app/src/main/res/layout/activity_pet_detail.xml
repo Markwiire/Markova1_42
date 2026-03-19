@@ -1,0 +1,347 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    android:background="#FFFFFF">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+
+        <ImageView
+            android:id="@+id/imagePetDetail"
+            android:layout_width="250dp"
+            android:layout_height="250dp"
+            android:scaleType="centerCrop"
+            android:layout_gravity="center_horizontal"
+            android:background="@drawable/placeholder_pet"
+            android:contentDescription="Фото питомца"
+            android:layout_marginBottom="16dp" />
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:id="@+id/textNameDetail"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Имя питомца"
+                android:textSize="28sp"
+                android:textStyle="bold"
+                android:textColor="#333333" />
+
+            <ImageView
+                android:id="@+id/btnFavoriteDetail"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_favorite_border"
+                android:contentDescription="Добавить в избранное"
+                android:padding="8dp"
+                android:layout_marginStart="8dp" />
+
+            <TextView
+                android:id="@+id/textPriceDetail"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="15000 руб."
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="#FF5722"
+                android:background="#FFF3E0"
+                android:padding="8dp"
+                android:paddingHorizontal="12dp"
+                android:gravity="center" />
+
+        </LinearLayout>
+
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="О питомце:"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#333333"
+            android:layout_marginBottom="8dp" />
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chipGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp"
+            app:chipSpacing="8dp"
+            app:singleLine="false">
+
+
+
+        </com.google.android.material.chip.ChipGroup>
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp"
+            android:background="#F8F9FA"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Подробная информация"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#333333"
+                android:layout_marginBottom="12dp" />
+
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Порода:"
+                    android:textSize="14sp"
+                    android:textColor="#666666" />
+
+                <TextView
+                    android:id="@+id/textBreedDetail"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2"
+                    android:text="Порода"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="#333333" />
+
+            </LinearLayout>
+
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Возраст:"
+                    android:textSize="14sp"
+                    android:textColor="#666666" />
+
+                <TextView
+                    android:id="@+id/textAgeDetail"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2"
+                    android:text="Возраст"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="#333333" />
+
+            </LinearLayout>
+
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Пол:"
+                    android:textSize="14sp"
+                    android:textColor="#666666" />
+
+                <TextView
+                    android:id="@+id/textGenderDetail"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2"
+                    android:text="Пол"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="#333333" />
+
+            </LinearLayout>
+
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Анкета создана:"
+                    android:textSize="14sp"
+                    android:textColor="#666666" />
+
+                <TextView
+                    android:id="@+id/textCreatedDate"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2"
+                    android:text="Дата"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="#333333" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp"
+            android:background="#E8F5E8"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Контактная информация"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#333333"
+                android:layout_marginBottom="12dp" />
+
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="12dp">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_location"
+                    android:layout_marginEnd="8dp"
+                    app:tint="#666666" />
+
+                <TextView
+                    android:id="@+id/textAddress"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Адрес"
+                    android:textSize="14sp"
+                    android:textColor="#333333"
+                    android:lineSpacingExtra="4dp" />
+
+            </LinearLayout>
+
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="8dp">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_phone"
+                    android:layout_marginEnd="8dp"
+                    app:tint="#666666" />
+
+                <TextView
+                    android:id="@+id/textPhone"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Телефон"
+                    android:textSize="14sp"
+                    android:textColor="#333333" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp"
+            android:background="#F8F9FA">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Описание"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#333333"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:id="@+id/textDescriptionDetail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Описание питомца"
+                android:textSize="14sp"
+                android:textColor="#666666"
+                android:lineSpacingExtra="4dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnStartChat"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Написать менеджеру"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:backgroundTint="#7E44E0"
+                android:textColor="#FFFFFF"
+                android:layout_marginTop="20dp"
+                android:layout_marginHorizontal="12dp"
+                android:paddingStart="20dp"
+                android:paddingEnd="20dp"
+                android:paddingTop="12dp"
+                android:paddingBottom="12dp"
+                android:minHeight="48dp"
+                app:cornerRadius="10dp"
+                app:icon="@drawable/ic_chat"
+                app:iconGravity="textStart"
+                app:iconPadding="6dp"
+                app:iconTint="#FFFFFF"
+                app:iconSize="20dp"
+                android:elevation="2dp"
+                android:stateListAnimator="@null" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="24dp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</ScrollView>

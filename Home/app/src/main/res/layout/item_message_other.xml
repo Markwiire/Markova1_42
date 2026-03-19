@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="start"
+    android:padding="8dp">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/message_bg_other"
+        android:padding="12dp"
+        android:maxWidth="260dp">
+
+        <TextView
+            android:id="@+id/textOtherMessage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Сообщение собеседника"
+            android:textSize="16sp"
+            android:textColor="#333333" />
+
+        <TextView
+            android:id="@+id/textOtherTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="12:30"
+            android:textSize="12sp"
+            android:textColor="#666666"
+            android:layout_marginTop="4dp" />
+
+    </LinearLayout>
+
+</LinearLayout>
