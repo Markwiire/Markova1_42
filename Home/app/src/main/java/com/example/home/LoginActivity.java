@@ -22,15 +22,45 @@ import okhttp3.Response;
 
 public class LoginActivity extends AppCompatActivity {
 
-    private static final String SUPABASE_URL = "https://rifzmuphaemtlmrijaqr.supabase.co/rest/v1/users";
-    private static final String SUPABASE_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJpZnptdXBoYWVtdGxtcmlqYXFyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIwNzc3MDAsImV4cCI6MjA3NzY1MzcwMH0.MA5qpZby_xlSAbwS70JfqbOGkRI04DZlb80MPRRP5Lc";
+    private static final String SUPABASE_URL = SupabaseConfig.SUPABASE_BASE_URL + SupabaseConfig.TABLE_USERS;
+    private static final String SUPABASE_API_KEY = SupabaseConfig.SUPABASE_API_KEY;
     private static final String PREFS_NAME = "UserPrefs";
     private static final String USER_ID_KEY = "user_id";
     private static final String USER_ROLE_KEY = "user_role";
+    private static final String USERNAME_KEY = "username";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        String userId = prefs.getString(USER_ID_KEY, "");
+        String userRole = prefs.getString(USER_ROLE_KEY, "");
+        String username = prefs.getString(USERNAME_KEY, "");
+
+       
+        if (!userId.isEmpty() && !userRole.isEmpty()) {
+            Log.d("МОИ_ЛОГИ", "Найдена сохраненная сессия: " + username + " (" + userRole + ")");
+
+            Intent intent;
+            if ("Manager".equalsIgnoreCase(userRole)) {
+                intent = new Intent(this, ManagerActivity.class);
+            } else {
+                intent = new Intent(this, MainActivity.class);
+            }
+
+           
+            intent.putExtra("USER_ID", userId);
+            intent.putExtra("USER_ROLE", userRole);
+            intent.putExtra("USERNAME", username);
+
+           
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish(); 
+            return; 
+        }
         setContentView(R.layout.login_activity);
 
         EditText etLogin = findViewById(R.id.username);
@@ -54,15 +84,15 @@ public class LoginActivity extends AppCompatActivity {
         });
 
         btnLogin.setOnClickListener(v -> {
-            String username = etLogin.getText().toString().trim();
+            String loginUsername = etLogin.getText().toString().trim();
             String password = etPassword.getText().toString().trim();
 
-            if (username.isEmpty() || password.isEmpty()) {
+            if (loginUsername.isEmpty() || password.isEmpty()) {
                 Toast.makeText(this, "Заполните все поля", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            checkUserCredentials(username, password);
+            checkUserCredentials(loginUsername, password);
         });
 
         tvToRegister.setOnClickListener(v -> {
@@ -148,7 +178,7 @@ public class LoginActivity extends AppCompatActivity {
         SharedPreferences.Editor editor = prefs.edit();
         editor.putString(USER_ID_KEY, userId);
         editor.putString(USER_ROLE_KEY, role);
-        editor.putString("username", username);
+        editor.putString(USERNAME_KEY, username);
         editor.apply();
     }
 
