@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Paws Paradise — каталог питомцев</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="header">
+    <div class="header-content">
+        <div class="logo">
+            <h1>Paws Paradise</h1>
+            <p>Элитные питомцы с любовью</p>
+        </div>
+        <div id="authButtonContainer">
+            <button class="auth-btn" id="openLoginBtn">Войти</button>
+        </div>
+        <div id="userPanel" style="display: none;" class="user-menu">
+            <span class="user-name" id="userName"></span>
+            <span class="user-role" id="userRole"></span>
+            <span class="logout-link" id="logoutBtn">Выйти</span>
+        </div>
+    </div>
+</div>
+
+<div id="appContent"></div>
+
+<footer>
+    Paws Paradise — авторский питомник, где каждый питомец получает лучшую заботу.
+</footer>
+
+<div id="authModal" class="modal">
+    <div class="modal-content">
+        <div id="authFormContainer">
+            <h2>Добро пожаловать</h2>
+            <div class="modal-sub">Войдите, чтобы следить за избранными</div>
+            <div class="input-group"><input type="text" id="authLogin" placeholder="Логин"></div>
+            <div class="input-group"><input type="password" id="authPassword" placeholder="Пароль"></div>
+            <div id="authModalError" class="error-message"></div>
+            <button class="btn-primary" id="submitAuthBtn">Войти</button>
+            <div class="switch-mode">Нет аккаунта? <span id="switchToRegister">Зарегистрироваться</span></div>
+        </div>
+        <div id="registerFormContainer" style="display: none;">
+            <h2>Регистрация</h2>
+            <div class="modal-sub">Создайте аккаунт клиента</div>
+            <div class="input-group"><input type="text" id="regLogin" placeholder="Логин"></div>
+            <div class="input-group"><input type="password" id="regPassword" placeholder="Пароль (мин. 8 символов)"></div>
+            <div class="input-group"><input type="password" id="regPasswordRepeat" placeholder="Повторите пароль"></div>
+            <div id="regModalError" class="error-message"></div>
+            <button class="btn-primary" id="submitRegisterBtn">Зарегистрироваться</button>
+            <div class="switch-mode">Уже есть аккаунт? <span id="switchToLogin">Войти</span></div>
+        </div>
+    </div>
+</div>
+
+<div class="chat-widget">
+    <button class="chat-toggle-btn" id="chatToggleBtn">💬</button>
+    <div class="chat-window" id="chatWindow">
+        <div class="chat-header">
+            <span id="chatTitle">Чат с менеджером</span>
+            <button id="chatCloseBtn">×</button>
+        </div>
+        <div class="chat-body" id="chatBody"></div>
+        <div class="chat-input">
+            <input type="text" id="chatInput" placeholder="Ваше сообщение...">
+            <button id="chatSendBtn">→</button>
+        </div>
+    </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
