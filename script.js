@@ -6,6 +6,7 @@ let allPets = [];
 let currentFilter = 'all';
 let currentChatPet = null;
 let currentChatId = null;
+let isLoading = false;
 
 function simpleEncrypt(password) {
     let encrypted = '';
@@ -28,11 +29,22 @@ function checkSession() {
 function updateUIForUser() {
     const authContainer = document.getElementById('authButtonContainer');
     const userPanelDiv = document.getElementById('userPanel');
+    const adminChatsBtn = document.getElementById('adminChatsBtnHeader');
+    const adminAddBtn = document.getElementById('adminAddPetBtn');
+    
     if (currentUser) {
         authContainer.style.display = 'none';
         userPanelDiv.style.display = 'flex';
         document.getElementById('userName').textContent = currentUser.username;
         document.getElementById('userRole').textContent = currentUser.role === 'Manager' ? 'Менеджер' : 'Клиент';
+        
+        if (currentUser.role === 'Manager') {
+            if (adminChatsBtn) adminChatsBtn.style.display = 'block';
+            if (adminAddBtn) adminAddBtn.style.display = 'block';
+        } else {
+            if (adminChatsBtn) adminChatsBtn.style.display = 'none';
+            if (adminAddBtn) adminAddBtn.style.display = 'none';
+        }
     } else {
         authContainer.style.display = 'block';
         userPanelDiv.style.display = 'none';
@@ -49,8 +61,10 @@ function clearSession() {
     currentUser = null;
     localStorage.removeItem('paws_user');
     updateUIForUser();
-    document.getElementById('authModal').classList.remove('active');
+    const modal = document.getElementById('authModal');
+    if (modal) modal.classList.remove('active');
     closeChat();
+    renderCatalog();
 }
 
 async function handleLogin(login, password) {
@@ -87,7 +101,11 @@ async function handleRegister(login, password, repeat) {
 }
 
 async function loadPets() {
-    document.getElementById('appContent').innerHTML = '<div class="container"><div class="loading">Загрузка питомцев...</div></div>';
+    if (isLoading) return;
+    isLoading = true;
+    
+    const appDiv = document.getElementById('appContent');
+    if (appDiv) appDiv.innerHTML = '<div class="container"><div class="loading">Загрузка питомцев...</div></div>';
     try {
         const response = await fetch(`${SUPABASE_URL}/rest/v1/pets?select=*`, {
             method: 'GET', headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
@@ -96,7 +114,9 @@ async function loadPets() {
         allPets = await response.json();
         renderCatalog();
     } catch (error) {
-        document.getElementById('appContent').innerHTML = `<div class="container"><div class="empty-catalog">Не удалось загрузить питомцев</div></div>`;
+        if (appDiv) appDiv.innerHTML = `<div class="container"><div class="empty-catalog">Не удалось загрузить питомцев</div></div>`;
+    } finally {
+        isLoading = false;
     }
 }
 
@@ -119,8 +139,11 @@ function renderCatalog() {
     else if (currentFilter === 'medium') filtered = filtered.filter(p => p.size === 'Средний');
     else if (currentFilter === 'large') filtered = filtered.filter(p => p.size === 'Большой');
 
+    const appDiv = document.getElementById('appContent');
+    if (!appDiv) return;
+
     if (filtered.length === 0) {
-        document.getElementById('appContent').innerHTML = `
+        appDiv.innerHTML = `
             <div class="container">
                 <div class="filters-section"><div class="filters-title">Фильтры</div><div class="chip-group" id="filterChips">
                     <div class="chip ${currentFilter === 'all' ? 'active' : ''}" data-filter="all">Все</div>
@@ -136,6 +159,8 @@ function renderCatalog() {
     }
 
     let cardsHtml = '';
+    const isManager = currentUser && currentUser.role === 'Manager';
+    
     for (let pet of filtered) {
         let imageUrl = pet.image_url;
         if (imageUrl && !imageUrl.startsWith('http')) imageUrl = `${SUPABASE_URL}/storage/v1/object/public/pets_images/${imageUrl}`;
@@ -144,8 +169,9 @@ function renderCatalog() {
         const typeClass = getChipClass(pet, 'type', pet.type);
         const genderClass = getChipClass(pet, 'gender', pet.gender);
         const sizeClass = pet.size ? getChipClass(pet, 'size', pet.size) : '';
+        
         cardsHtml += `
-            <div class="pet-card" data-pet='${JSON.stringify(pet).replace(/'/g, "&#39;")}'>
+            <div class="pet-card" data-pet-id="${pet.id}">
                 <div class="image-container">
                     <img class="pet-image" src="${imageUrl || 'https://placehold.co/600x400?text=Нет+фото'}" alt="${pet.name}" onerror="this.src='https://placehold.co/600x400?text=Нет+фото'">
                 </div>
@@ -160,13 +186,19 @@ function renderCatalog() {
                     </div>
                     <div class="pet-price">${pet.price ? pet.price.toLocaleString() + ' ₽' : 'Цена по запросу'}</div>
                     <div class="card-buttons">
-                        <button class="btn-detail">Узнать больше</button>
-                        <button class="btn-chat">Написать менеджеру</button>
+                        <button class="btn-detail" data-pet-id="${pet.id}">Узнать больше</button>
+                        ${!isManager ? '<button class="btn-chat" data-pet-id="${pet.id}">Написать менеджеру</button>' : ''}
                     </div>
+                    ${isManager ? `
+                    <div class="admin-actions">
+                        <button class="edit-pet-btn" data-pet-id="${pet.id}">Редактировать</button>
+                        <button class="delete-pet-btn" data-pet-id="${pet.id}">Удалить</button>
+                    </div>` : ''}
                 </div>
             </div>`;
     }
-    document.getElementById('appContent').innerHTML = `
+    
+    appDiv.innerHTML = `
         <div class="container">
             <div class="filters-section"><div class="filters-title">Фильтры</div><div class="chip-group" id="filterChips">
                 <div class="chip ${currentFilter === 'all' ? 'active' : ''}" data-filter="all">Все</div>
@@ -179,24 +211,178 @@ function renderCatalog() {
             <div class="pets-grid">${cardsHtml}</div>
         </div>`;
     
-    document.querySelectorAll('.pet-card').forEach(card => {
-        const pet = JSON.parse(card.dataset.pet);
-        const detailBtn = card.querySelector('.btn-detail');
-        const chatBtn = card.querySelector('.btn-chat');
-        detailBtn.addEventListener('click', (e) => {
+    appDiv.querySelectorAll('.btn-detail').forEach(btn => {
+        btn.addEventListener('click', (e) => {
             e.stopPropagation();
-            showPetDetailPage(pet);
-        });
-        chatBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            openChatForPet(pet);
+            const petId = btn.dataset.petId;
+            const pet = allPets.find(p => p.id === petId);
+            if (pet) showPetDetailPage(pet);
         });
     });
+    
+    if (isManager) {
+        appDiv.querySelectorAll('.edit-pet-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const petId = btn.dataset.petId;
+                const pet = allPets.find(p => p.id === petId);
+                if (pet) showPetForm(pet);
+            });
+        });
+        
+        appDiv.querySelectorAll('.delete-pet-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const petId = btn.dataset.petId;
+                const pet = allPets.find(p => p.id === petId);
+                if (pet && confirm(`Вы уверены, что хотите удалить питомца ${pet.name}?`)) {
+                    await deletePet(petId);
+                }
+            });
+        });
+    }
+    
+    appDiv.querySelectorAll('.btn-chat').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const petId = btn.dataset.petId;
+            const pet = allPets.find(p => p.id === petId);
+            if (pet) openChatForPet(pet);
+        });
+    });
+    
     attachFilterEvents();
+}
+
+async function deletePet(petId) {
+    try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/pets?id=eq.${petId}`, {
+            method: 'DELETE',
+            headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+        });
+        if (response.ok) {
+            alert('Питомец удалён');
+            await loadPets();
+        } else {
+            alert('Ошибка при удалении');
+        }
+    } catch(e) {
+        console.error(e);
+        alert('Ошибка соединения');
+    }
+}
+
+async function savePet(petData, isEdit = false, petId = null) {
+    try {
+        let response;
+        if (isEdit && petId) {
+            response = await fetch(`${SUPABASE_URL}/rest/v1/pets?id=eq.${petId}`, {
+                method: 'PATCH',
+                headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(petData)
+            });
+        } else {
+            response = await fetch(`${SUPABASE_URL}/rest/v1/pets`, {
+                method: 'POST',
+                headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(petData)
+            });
+        }
+        if (response.ok) {
+            alert(isEdit ? 'Питомец обновлён' : 'Питомец добавлен');
+            await loadPets();
+            return true;
+        } else {
+            alert('Ошибка при сохранении');
+            return false;
+        }
+    } catch(e) {
+        console.error(e);
+        alert('Ошибка соединения');
+        return false;
+    }
+}
+
+function showPetForm(pet = null) {
+    const isEdit = !!pet;
+    
+    const modalHtml = `
+        <div class="admin-pet-modal" id="adminPetModal">
+            <div class="admin-pet-modal-content">
+                <h3>${isEdit ? 'Редактировать питомца' : 'Добавить питомца'}</h3>
+                <input type="text" id="petName" placeholder="Имя" value="${pet ? escapeHtml(pet.name) : ''}">
+                <select id="petType">
+                    <option value="dog" ${pet && pet.type === 'dog' ? 'selected' : ''}>Собака</option>
+                    <option value="cat" ${pet && pet.type === 'cat' ? 'selected' : ''}>Кошка</option>
+                </select>
+                <input type="text" id="petBreed" placeholder="Порода" value="${pet ? escapeHtml(pet.breed || '') : ''}">
+                <input type="number" id="petAge" placeholder="Возраст (месяцев)" value="${pet ? pet.age : ''}">
+                <select id="petGender">
+                    <option value="male" ${pet && pet.gender === 'male' ? 'selected' : ''}>♂ Мальчик</option>
+                    <option value="female" ${pet && pet.gender === 'female' ? 'selected' : ''}>♀ Девочка</option>
+                </select>
+                <select id="petSize">
+                    <option value="">Размер не указан</option>
+                    <option value="Маленький" ${pet && pet.size === 'Маленький' ? 'selected' : ''}>Маленький</option>
+                    <option value="Средний" ${pet && pet.size === 'Средний' ? 'selected' : ''}>Средний</option>
+                    <option value="Большой" ${pet && pet.size === 'Большой' ? 'selected' : ''}>Большой</option>
+                </select>
+                <input type="text" id="petColor" placeholder="Окрас" value="${pet ? escapeHtml(pet.color || '') : ''}">
+                <input type="text" id="petHairLength" placeholder="Длина шерсти" value="${pet ? escapeHtml(pet.hair_length || '') : ''}">
+                <input type="text" id="petImageUrl" placeholder="URL изображения" value="${pet ? escapeHtml(pet.image_url || '') : ''}">
+                <textarea id="petDescription" placeholder="Описание">${pet ? escapeHtml(pet.description || '') : ''}</textarea>
+                <input type="number" id="petPrice" placeholder="Цена (руб.)" value="${pet ? pet.price : ''}">
+                <input type="text" id="petAddress" placeholder="Адрес" value="${pet ? escapeHtml(pet.address || '') : ''}">
+                <input type="text" id="petPhone" placeholder="Телефон" value="${pet ? escapeHtml(pet.phone || '') : ''}">
+                <div class="admin-pet-modal-buttons">
+                    <button class="btn-save" id="savePetBtn">Сохранить</button>
+                    <button class="btn-cancel" id="cancelPetBtn">Отмена</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    document.getElementById('savePetBtn').addEventListener('click', async () => {
+        const petData = {
+            name: document.getElementById('petName').value.trim(),
+            type: document.getElementById('petType').value,
+            breed: document.getElementById('petBreed').value.trim(),
+            age: parseInt(document.getElementById('petAge').value) || 0,
+            gender: document.getElementById('petGender').value,
+            size: document.getElementById('petSize').value,
+            color: document.getElementById('petColor').value.trim(),
+            hair_length: document.getElementById('petHairLength').value.trim(),
+            image_url: document.getElementById('petImageUrl').value.trim(),
+            description: document.getElementById('petDescription').value.trim(),
+            price: parseFloat(document.getElementById('petPrice').value) || 0,
+            address: document.getElementById('petAddress').value.trim(),
+            phone: document.getElementById('petPhone').value.trim(),
+            created_date: pet ? pet.created_date : new Date().toISOString().split('T')[0]
+        };
+        
+        if (!petData.name) {
+            alert('Введите имя питомца');
+            return;
+        }
+        
+        const success = await savePet(petData, isEdit, pet ? pet.id : null);
+        if (success) {
+            const modal = document.getElementById('adminPetModal');
+            if (modal) modal.remove();
+        }
+    });
+    
+    document.getElementById('cancelPetBtn').addEventListener('click', () => {
+        const modal = document.getElementById('adminPetModal');
+        if (modal) modal.remove();
+    });
 }
 
 function attachFilterEvents() {
     document.querySelectorAll('.chip').forEach(chip => {
+        chip.removeEventListener('click', () => {});
         chip.addEventListener('click', () => {
             currentFilter = chip.dataset.filter;
             renderCatalog();
@@ -235,8 +421,10 @@ function showPetDetailPage(pet) {
             </div>
         </div>
     `;
-    document.getElementById('appContent').innerHTML = detailHtml;
-    document.getElementById('backToCatalogBtn').addEventListener('click', () => renderCatalog());
+    const appDiv = document.getElementById('appContent');
+    if (appDiv) appDiv.innerHTML = detailHtml;
+    const backBtn = document.getElementById('backToCatalogBtn');
+    if (backBtn) backBtn.addEventListener('click', () => renderCatalog());
 }
 
 async function openChatForPet(pet) {
@@ -245,9 +433,17 @@ async function openChatForPet(pet) {
         document.getElementById('openLoginBtn').click();
         return;
     }
+    
+    if (currentUser.role === 'Manager') {
+        alert('Вы вошли как менеджер. Для общения с клиентами используйте кнопку "Чаты" в шапке сайта.');
+        return;
+    }
+    
     currentChatPet = pet;
-    document.getElementById('chatTitle').innerHTML = `Чат о ${pet.name}`;
+    const chatTitle = document.getElementById('chatTitle');
+    if (chatTitle) chatTitle.innerHTML = `Чат о ${pet.name}`;
     const managerId = (pet.type === 'dog') ? 'bab5ce91-d235-4672-a851-597c1fce679b' : '46d51d9c-b480-4716-84c8-e4025026963b';
+    
     try {
         const existingResponse = await fetch(`${SUPABASE_URL}/rest/v1/chats?pet_id=eq.${pet.id}&client_id=eq.${currentUser.id}&select=id`, {
             headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
@@ -266,7 +462,8 @@ async function openChatForPet(pet) {
             currentChatId = created[0]?.id;
         }
         await loadMessages();
-        document.getElementById('chatWindow').classList.add('active');
+        const chatWindow = document.getElementById('chatWindow');
+        if (chatWindow) chatWindow.classList.add('active');
     } catch(e) { console.error(e); alert('Ошибка открытия чата'); }
 }
 
@@ -277,6 +474,7 @@ async function loadMessages() {
     });
     const messages = await response.json();
     const chatBody = document.getElementById('chatBody');
+    if (!chatBody) return;
     chatBody.innerHTML = '';
     if (messages) {
         messages.forEach(msg => {
@@ -304,87 +502,235 @@ async function sendMessage() {
         headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ last_message: text, last_message_time: new Date().toISOString() })
     });
-    input.value = '';
+    if (input) input.value = '';
     await loadMessages();
 }
 
 function closeChat() {
-    document.getElementById('chatWindow').classList.remove('active');
+    const chatWindow = document.getElementById('chatWindow');
+    if (chatWindow) chatWindow.classList.remove('active');
     currentChatId = null;
     currentChatPet = null;
 }
 
-document.getElementById('openLoginBtn').addEventListener('click', () => {
-    document.getElementById('authFormContainer').style.display = 'block';
-    document.getElementById('registerFormContainer').style.display = 'none';
-    document.getElementById('authModal').classList.add('active');
-});
-
-document.getElementById('logoutBtn').addEventListener('click', () => { clearSession(); renderCatalog(); });
-
-document.getElementById('switchToRegister').addEventListener('click', () => {
-    document.getElementById('authFormContainer').style.display = 'none';
-    document.getElementById('registerFormContainer').style.display = 'block';
-});
-
-document.getElementById('switchToLogin').addEventListener('click', () => {
-    document.getElementById('registerFormContainer').style.display = 'none';
-    document.getElementById('authFormContainer').style.display = 'block';
-});
-
-document.getElementById('submitAuthBtn').addEventListener('click', async () => {
-    const login = document.getElementById('authLogin').value.trim();
-    const pwd = document.getElementById('authPassword').value;
-    const errorDiv = document.getElementById('authModalError');
-    if (!login || !pwd) { errorDiv.textContent = 'Заполните все поля'; errorDiv.style.display = 'block'; return; }
-    const res = await handleLogin(login, pwd);
-    if (res.success) {
-        document.getElementById('authModal').classList.remove('active');
-        renderCatalog();
-    } else {
-        errorDiv.textContent = res.message;
-        errorDiv.style.display = 'block';
-    }
-});
-
-document.getElementById('submitRegisterBtn').addEventListener('click', async () => {
-    const login = document.getElementById('regLogin').value.trim();
-    const pwd = document.getElementById('regPassword').value;
-    const repeat = document.getElementById('regPasswordRepeat').value;
-    const errorDiv = document.getElementById('regModalError');
-    if (!login || !pwd || !repeat) { errorDiv.textContent = 'Заполните все поля'; errorDiv.style.display = 'block'; return; }
-    const res = await handleRegister(login, pwd, repeat);
-    if (res.success) {
-        const loginRes = await handleLogin(login, pwd);
-        if (loginRes.success) {
-            document.getElementById('authModal').classList.remove('active');
-            renderCatalog();
-        } else {
-            errorDiv.textContent = 'Регистрация прошла, войдите вручную';
-            errorDiv.style.display = 'block';
-            document.getElementById('switchToLogin').click();
+async function showAdminChats() {
+    if (!currentUser || currentUser.role !== 'Manager') return;
+    
+    const appDiv = document.getElementById('appContent');
+    if (appDiv) appDiv.innerHTML = '<div class="container"><div class="loading">Загрузка чатов...</div></div>';
+    
+    try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/chats?manager_id=eq.${currentUser.id}&select=*,pets(name),users!chats_client_id_fkey(username)`, {
+            headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+        });
+        const chats = await response.json();
+        
+        if (!chats.length) {
+            if (appDiv) appDiv.innerHTML = `
+                <div class="container">
+                    <button class="back-btn" id="backToCatalogBtn">← Назад к каталогу</button>
+                    <div class="empty-catalog">У вас пока нет чатов с клиентами</div>
+                </div>`;
+            const backBtn = document.getElementById('backToCatalogBtn');
+            if (backBtn) backBtn.addEventListener('click', () => renderCatalog());
+            return;
         }
-    } else {
-        errorDiv.textContent = res.message;
-        errorDiv.style.display = 'block';
+        
+        let chatsHtml = `
+            <div class="container">
+                <button class="back-btn" id="backToCatalogBtn">← Назад к каталогу</button>
+                <div class="filters-section"><div class="filters-title">Чаты с клиентами</div></div>
+                <div class="pets-grid">`;
+        
+        for (let chat of chats) {
+            const petName = chat.pets?.name || 'Питомец';
+            const clientName = chat.users?.username || 'Клиент';
+            chatsHtml += `
+                <div class="pet-card" data-chat-id="${chat.id}" data-pet-name="${petName}" data-client-name="${clientName}">
+                    <div class="pet-info">
+                        <div class="pet-name">${escapeHtml(petName)}</div>
+                        <div class="pet-breed">Клиент: ${escapeHtml(clientName)}</div>
+                        <div class="pet-details">
+                            <span class="pet-detail-chip">Последнее: ${chat.last_message ? chat.last_message.substring(0, 30) : 'Нет сообщений'}</span>
+                        </div>
+                        <div class="card-buttons">
+                            <button class="btn-chat" style="background: #6a1b9a;">Открыть чат</button>
+                        </div>
+                    </div>
+                </div>`;
+        }
+        
+        chatsHtml += `</div></div>`;
+        if (appDiv) appDiv.innerHTML = chatsHtml;
+        
+        const backBtn = document.getElementById('backToCatalogBtn');
+        if (backBtn) backBtn.addEventListener('click', () => renderCatalog());
+        
+        document.querySelectorAll('.pet-card').forEach(card => {
+            const chatId = card.dataset.chatId;
+            const petName = card.dataset.petName;
+            const clientName = card.dataset.clientName;
+            const chatBtn = card.querySelector('.btn-chat');
+            if (chatBtn) {
+                chatBtn.addEventListener('click', () => {
+                    openAdminChat(chatId, petName, clientName);
+                });
+            }
+        });
+    } catch(e) {
+        console.error(e);
+        if (appDiv) appDiv.innerHTML = `<div class="container"><div class="empty-catalog">Ошибка загрузки чатов</div></div>`;
     }
-});
+}
 
-window.addEventListener('click', (e) => { if (e.target === document.getElementById('authModal')) document.getElementById('authModal').classList.remove('active'); });
+async function openAdminChat(chatId, petName, clientName) {
+    currentChatId = chatId;
+    const chatTitle = document.getElementById('chatTitle');
+    if (chatTitle) chatTitle.innerHTML = `Чат: ${petName} (${clientName})`;
+    await loadMessages();
+    const chatWindow = document.getElementById('chatWindow');
+    if (chatWindow) chatWindow.classList.add('active');
+}
 
-document.getElementById('chatToggleBtn').addEventListener('click', () => {
-    if (currentChatId) {
-        document.getElementById('chatWindow').classList.toggle('active');
-    } else if (currentUser) {
-        alert('Выберите питомца, чтобы начать чат');
-    } else {
-        alert('Войдите в аккаунт, чтобы начать чат');
+document.addEventListener('DOMContentLoaded', () => {
+    const openLoginBtn = document.getElementById('openLoginBtn');
+    if (openLoginBtn) {
+        openLoginBtn.addEventListener('click', () => {
+            const authForm = document.getElementById('authFormContainer');
+            const registerForm = document.getElementById('registerFormContainer');
+            const authModal = document.getElementById('authModal');
+            if (authForm) authForm.style.display = 'block';
+            if (registerForm) registerForm.style.display = 'none';
+            if (authModal) authModal.classList.add('active');
+        });
     }
+    
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => { clearSession(); renderCatalog(); });
+    }
+    
+    const switchToRegister = document.getElementById('switchToRegister');
+    if (switchToRegister) {
+        switchToRegister.addEventListener('click', () => {
+            const authForm = document.getElementById('authFormContainer');
+            const registerForm = document.getElementById('registerFormContainer');
+            if (authForm) authForm.style.display = 'none';
+            if (registerForm) registerForm.style.display = 'block';
+        });
+    }
+    
+    const switchToLogin = document.getElementById('switchToLogin');
+    if (switchToLogin) {
+        switchToLogin.addEventListener('click', () => {
+            const registerForm = document.getElementById('registerFormContainer');
+            const authForm = document.getElementById('authFormContainer');
+            if (registerForm) registerForm.style.display = 'none';
+            if (authForm) authForm.style.display = 'block';
+        });
+    }
+    
+    const submitAuthBtn = document.getElementById('submitAuthBtn');
+    if (submitAuthBtn) {
+        submitAuthBtn.addEventListener('click', async () => {
+            const login = document.getElementById('authLogin')?.value.trim() || '';
+            const pwd = document.getElementById('authPassword')?.value || '';
+            const errorDiv = document.getElementById('authModalError');
+            if (!login || !pwd) {
+                if (errorDiv) {
+                    errorDiv.textContent = 'Заполните все поля';
+                    errorDiv.style.display = 'block';
+                }
+                return;
+            }
+            const res = await handleLogin(login, pwd);
+            if (res.success) {
+                const authModal = document.getElementById('authModal');
+                if (authModal) authModal.classList.remove('active');
+                renderCatalog();
+            } else {
+                if (errorDiv) {
+                    errorDiv.textContent = res.message;
+                    errorDiv.style.display = 'block';
+                }
+            }
+        });
+    }
+    
+    const submitRegisterBtn = document.getElementById('submitRegisterBtn');
+    if (submitRegisterBtn) {
+        submitRegisterBtn.addEventListener('click', async () => {
+            const login = document.getElementById('regLogin')?.value.trim() || '';
+            const pwd = document.getElementById('regPassword')?.value || '';
+            const repeat = document.getElementById('regPasswordRepeat')?.value || '';
+            const errorDiv = document.getElementById('regModalError');
+            if (!login || !pwd || !repeat) {
+                if (errorDiv) {
+                    errorDiv.textContent = 'Заполните все поля';
+                    errorDiv.style.display = 'block';
+                }
+                return;
+            }
+            const res = await handleRegister(login, pwd, repeat);
+            if (res.success) {
+                const loginRes = await handleLogin(login, pwd);
+                if (loginRes.success) {
+                    const authModal = document.getElementById('authModal');
+                    if (authModal) authModal.classList.remove('active');
+                    renderCatalog();
+                } else {
+                    if (errorDiv) {
+                        errorDiv.textContent = 'Регистрация прошла, войдите вручную';
+                        errorDiv.style.display = 'block';
+                    }
+                    const switchBtn = document.getElementById('switchToLogin');
+                    if (switchBtn) switchBtn.click();
+                }
+            } else {
+                if (errorDiv) {
+                    errorDiv.textContent = res.message;
+                    errorDiv.style.display = 'block';
+                }
+            }
+        });
+    }
+    
+    window.addEventListener('click', (e) => {
+        const authModal = document.getElementById('authModal');
+        if (e.target === authModal && authModal) authModal.classList.remove('active');
+    });
+    
+    const chatToggleBtn = document.getElementById('chatToggleBtn');
+    if (chatToggleBtn) {
+        chatToggleBtn.addEventListener('click', () => {
+            if (currentChatId) {
+                const chatWindow = document.getElementById('chatWindow');
+                if (chatWindow) chatWindow.classList.toggle('active');
+            } else if (currentUser && currentUser.role === 'Manager') {
+                alert('Нажмите кнопку "Чаты" в шапке сайта, чтобы открыть список чатов');
+            } else if (currentUser) {
+                alert('Выберите питомца и нажмите "Написать менеджеру", чтобы начать чат');
+            } else {
+                alert('Войдите в аккаунт, чтобы начать чат');
+            }
+        });
+    }
+    
+    const chatCloseBtn = document.getElementById('chatCloseBtn');
+    if (chatCloseBtn) chatCloseBtn.addEventListener('click', closeChat);
+    
+    const chatSendBtn = document.getElementById('chatSendBtn');
+    if (chatSendBtn) chatSendBtn.addEventListener('click', sendMessage);
+    
+    const chatInput = document.getElementById('chatInput');
+    if (chatInput) chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+    
+    const adminChatsBtn = document.getElementById('adminChatsBtnHeader');
+    if (adminChatsBtn) adminChatsBtn.addEventListener('click', showAdminChats);
+    
+    const adminAddBtn = document.getElementById('adminAddPetBtn');
+    if (adminAddBtn) adminAddBtn.addEventListener('click', () => showPetForm());
+    
+    checkSession();
+    loadPets();
 });
-
-document.getElementById('chatCloseBtn').addEventListener('click', closeChat);
-document.getElementById('chatSendBtn').addEventListener('click', sendMessage);
-document.getElementById('chatInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
-
-checkSession();
-loadPets();
