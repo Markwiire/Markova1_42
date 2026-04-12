@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Paws Paradise — каталог питомцев</title>
+    <title>Paws Paradise — Панель управления питомцами</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -18,6 +18,8 @@
             <button class="auth-btn" id="openLoginBtn">Войти</button>
         </div>
         <div id="userPanel" style="display: none;" class="user-menu">
+            <button id="adminChatsBtnHeader" class="admin-chats-btn" style="display: none;">💬 Чаты</button>
+            <button id="adminAddPetBtn" class="admin-chats-btn" style="display: none; background: #ff8f00;">Добавить</button>
             <span class="user-name" id="userName"></span>
             <span class="user-role" id="userRole"></span>
             <span class="logout-link" id="logoutBtn">Выйти</span>
@@ -35,7 +37,7 @@
     <div class="modal-content">
         <div id="authFormContainer">
             <h2>Добро пожаловать</h2>
-            <div class="modal-sub">Войдите, чтобы следить за избранными</div>
+            <div class="modal-sub">Войдите, чтобы управлять питомцами</div>
             <div class="input-group"><input type="text" id="authLogin" placeholder="Логин"></div>
             <div class="input-group"><input type="password" id="authPassword" placeholder="Пароль"></div>
             <div id="authModalError" class="error-message"></div>
