@@ -187,7 +187,7 @@ function renderCatalog() {
                     <div class="pet-price">${pet.price ? pet.price.toLocaleString() + ' ₽' : 'Цена по запросу'}</div>
                     <div class="card-buttons">
                         <button class="btn-detail" data-pet-id="${pet.id}">Узнать больше</button>
-                        ${!isManager ? '<button class="btn-chat" data-pet-id="${pet.id}">Написать менеджеру</button>' : ''}
+                        ${!isManager ? `<button class="btn-chat" data-pet-id="${pet.id}">Написать менеджеру</button>` : ''}
                     </div>
                     ${isManager ? `
                     <div class="admin-actions">
